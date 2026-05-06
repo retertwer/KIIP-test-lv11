@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIIP Level 4 Lesson 11 Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kantumruy Pro', 'Noto Sans KR', sans-serif; background-color: #f0f2f5; }
+        .khmer-font { font-family: 'Kantumruy Pro', sans-serif; }
+        .korean-font { font-family: 'Noto Sans KR', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct { background-color: #d1fae5 !important; border-color: #10b981 !important; color: #065f46 !important; }
+        .incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .power-up-active { filter: grayscale(0.5); opacity: 0.7; pointer-events: none; }
+        .audio-playing { animation: pulse 1s infinite; color: #f59e0b !important; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body class="p-2 md:p-4">
+    <div id="app" class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden min-h-[90vh] flex flex-col">
+        <!-- Start Screen -->
+        <div id="start-screen" class="p-8 flex flex-col items-center justify-center flex-grow text-center">
+            <div class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center text-white text-4xl mb-6 shadow-lg">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h1 class="text-3xl font-bold mb-4 text-gray-800">KIIP កម្រិត ៤ - មេរៀនទី ១១</h1>
+            <p class="text-gray-600 mb-8 khmer-font">វិញ្ញាសាសាកល្បងត្រៀមប្រឡង 중간평가<br>ប្រធានបទ៖ <b>សុវត្ថិភាព និងគ្រោះមហន្តរាយ (생활 안전)</b></p>
+            <button onclick="quizManager.start()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-12 rounded-full text-xl transition-all shadow-md transform hover:scale-105">
+                ចាប់ផ្ដើមធ្វើតេស្ត
+            </button>
+            <p class="mt-6 text-sm text-gray-400 italic">មាន ៣០ សំណួរ • វេយ្យាករណ៍ • ការអាន • វប្បធម៌</p>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden flex-grow flex flex-col">
+            <!-- Header -->
+            <div class="bg-blue-600 p-4 text-white">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="question-index" class="font-bold text-lg">សំណួរទី 1/30</span>
+                    <div class="flex gap-3">
+                        <button id="btn-audio-ko" onclick="audioManager.speakCurrent('ko')" class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg transition-colors flex items-center gap-2" title="Listen Korean">
+                            🇰🇷 <i class="fas fa-volume-up"></i>
+                        </button>
+                        <button id="btn-audio-km" onclick="audioManager.speakCurrent('km')" class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg transition-colors flex items-center gap-2" title="Listen Khmer">
+                            🇰🇭 <i class="fas fa-volume-up"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="w-full bg-blue-900/30 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-yellow-400 h-full transition-all duration-300" style="width: 3%"></div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-4 md:p-6 flex-grow overflow-y-auto">
+                <!-- Power-ups -->
+                <div id="power-ups" class="flex gap-2 mb-4">
+                    <button id="pu-translate-q" onclick="quizManager.usePowerUp('translateQ')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-xs py-2 px-1 rounded-lg text-gray-700 border border-gray-300">
+                        <i class="fas fa-language"></i> បកប្រែសំណួរ
+                    </button>
+                    <button id="pu-fifty" onclick="quizManager.usePowerUp('fifty')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-xs py-2 px-1 rounded-lg text-gray-700 border border-gray-300">
+                        <i class="fas fa-divide"></i> កាត់ ៥០/៥០
+                    </button>
+                    <button id="pu-translate-a" onclick="quizManager.usePowerUp('translateA')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-xs py-2 px-1 rounded-lg text-gray-700 border border-gray-300">
+                        <i class="fas fa-list-ul"></i> បកប្រែចម្លើយ
+                    </button>
+                </div>
+
+                <!-- Question Text -->
+                <div id="question-container" class="mb-6 fade-in">
+                    <div id="question-text-ko" class="text-xl font-bold text-gray-800 korean-font leading-relaxed"></div>
+                    <div id="question-text-km" class="hidden text-md mt-2 text-blue-700 khmer-font font-medium bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400 italic"></div>
+                </div>
+
+                <!-- Options -->
+                <div id="options-container" class="space-y-3 mb-6"></div>
+
+                <!-- Explanation Box -->
+                <div id="explanation-box" class="hidden fade-in bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                    <h3 class="font-bold text-yellow-800 mb-2 border-b border-yellow-200 pb-1">
+                        <i class="fas fa-lightbulb"></i> ការពន្យល់លម្អិត
+                    </h3>
+                    <div id="explanation-content" class="text-sm text-gray-700 space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- Footer Action -->
+            <div class="p-4 border-t bg-gray-50 flex justify-between items-center">
+                <div class="text-sm font-bold">ពិន្ទុ: <span id="score" class="text-blue-600">0</span></div>
+                <button id="next-btn" onclick="quizManager.next()" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-md">
+                    សំណួរបន្ទាប់ <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden p-8 flex flex-col items-center justify-center flex-grow text-center">
+            <div id="result-icon" class="text-6xl mb-4">🏆</div>
+            <h2 class="text-3xl font-bold mb-2">បញ្ចប់ការតេស្ត!</h2>
+            <p id="result-score-text" class="text-xl mb-6 text-gray-600"></p>
+            <div class="space-y-3 w-full max-w-xs">
+                <button onclick="location.reload()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md">ធ្វើម្ដងទៀត</button>
+                <button onclick="quizManager.startReview()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-md">ឆែកមើលចម្លើយឡើងវិញ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                q_ko: "다음 빈칸에 알맞은 것을 고르십시오.\n\n길을 걷다가 갑자기 지진이 나면 가방이나 손으로 (   )을/를 보호해야 한다.",
+                q_km: "ប្រសិនបើមានការរញ្ជួយដីកើតឡើងភ្លាមៗពេលកំពុងដើរតាមផ្លូវ អ្នកត្រូវតែការពារ ( ) ដោយដៃ ឬកាបូប។",
+                options: ["머리", "다리", "어깨", "허리"],
+                options_km: ["ក្បាល", "ជើង", "ស្មា", "ចង្កេះ"],
+                correct: 0,
+                explanation: {
+                    desc: "ក្នុងករណីរញ្ជួយដី ក្បាល (머리) គឺជាផ្នែកដែលសំខាន់បំផុតដែលត្រូវការពារពីការធ្លាក់មកនៃកម្ទេចកម្ទី។",
+                    vocab: [{ko: "지진", km: "ការរញ្ជួយដី"}, {ko: "보호하다", km: "ការពារ"}, {ko: "갑자기", km: "ភ្លាមៗ"}]
+                }
+            },
+            {
+                q_ko: "다음 중 밑줄 친 부분과 의미가 비슷한 것을 고르십시오.\n\n불이 났을 때는 당황하지 말고 119에 <u>신고해야</u> 합니다.",
+                q_km: "នៅពេលមានភ្លើងឆេះ កុំស្លន់ស្លោអី ត្រូវតែ (រាយការណ៍) ទៅលេខ ១១៩។",
+                options: ["연락해야", "조심해야", "알려야", "구해야"],
+                options_km: ["ត្រូវទាក់ទង", "ត្រូវប្រុងប្រយ័ត្ន", "ត្រូវប្រាប់/ជូនដំណឹង", "ត្រូវជួយសង្គ្រោះ"],
+                correct: 2,
+                explanation: {
+                    desc: "신고하다 (រាយការណ៍) មានន័យប្រហាក់ប្រហែលនឹង 알리다 (ប្រាប់/ជូនដំណឹង) ក្នុងបរិបទប្រាប់អាជ្ញាធរពីហេតុការណ៍អ្វីមួយ។",
+                    vocab: [{ko: "당황하다", km: "ស្លន់ស្លោ"}, {ko: "화재", km: "គ្រោះអគ្គីភ័យ"}]
+                }
+            },
+            {
+                q_ko: "빈칸에 알맞은 것을 고르십시오.\n\n가스레인지를 사용한 후에는 가스 밸브를 잠그는 것을 (   ) 안 된다.",
+                q_km: "ក្រោយពេលប្រើចង្ក្រានហ្គាសរួច អ្នកមិនត្រូវ ( ) ការបិទវ៉ានហ្គាសនោះទេ។",
+                options: ["잊어서는", "배워서는", "들어서는", "막아서는"],
+                options_km: ["ភ្លេច", "រៀន", "ចូល/ឮ", "ស្ទះ/រារាំង"],
+                correct: 0,
+                explanation: {
+                    desc: "វេយ្យាករណ៍ -아서/어서는 안 된다 (មិនត្រូវធ្វើ...)។ ក្នុងន័យសុវត្ថិភាព គឺមិនត្រូវ 'ភ្លេច' (잊다) បិទវ៉ានហ្គាសឡើយ។",
+                    vocab: [{ko: "밸브", km: "វ៉ាន"}, {ko: "잠그다", km: "បិទ/ចាក់សោ"}]
+                }
+            },
+            {
+                q_ko: "건물에 불이 난 것을 (   ) 바로 대피해야 합니다.",
+                q_km: "( ) មានភ្លើងឆេះក្នុងអាគារ អ្នកត្រូវតែជម្លៀសខ្លួនចេញភ្លាម។",
+                options: ["보는 바람에", "보자마자", "보느라고", "보더라도"],
+                options_km: ["ដោយសារតែមើល", "ភ្លាមៗបន្ទាប់ពីឃើញ", "រវល់តែមើល", "ទោះបីជាមើលក៏ដោយ"],
+                correct: 1,
+                explanation: {
+                    desc: "-자마자 ប្រើសម្រាប់សកម្មភាពដែលកើតឡើងភ្លាមៗបន្ទាប់ពីសកម្មភាពមួយទៀត។",
+                    vocab: [{ko: "대피하다", km: "ជម្លៀសខ្លួន"}]
+                }
+            },
+            {
+                q_ko: "엘리베이터가 갑자기 (   ) 비상 벨을 누르고 기다려야 합니다.",
+                q_km: "ប្រសិនបើលីត (Elevator) ( ) ភ្លាមៗ អ្នកត្រូវចុចប៊ូតុងអាសន្នហើយរង់ចាំ។",
+                options: ["멈추면", "움직이면", "열리면", "닫히면"],
+                options_km: ["ប្រសិនបើឈប់", "ប្រសិនបើកម្រើក", "ប្រសិនបើបើក", "ប្រសិនបើបិទ"],
+                correct: 0,
+                explanation: {
+                    desc: "멈추다 (ឈប់)។ ប្រសិនបើលីតគាំង ត្រូវចុច 비상 벨 (ប៊ូតុងអាសន្ន)។",
+                    vocab: [{ko: "비상 벨", km: "ប៊ូតុងអាសន្ន"}]
+                }
+            },
+            {
+                q_ko: "비가 너무 많이 와서 집이 (   ) 정도로 홍수가 났다.",
+                q_km: "ភ្លៀងធ្លាក់ខ្លាំងពេក រហូតដល់ថ្នាក់ផ្ទះ ( ) គឺមានទឹកជំនន់កើតឡើង។",
+                options: ["잠길", "넘칠", "꺼질", "터질"],
+                options_km: ["លិច", "ហៀរ", "រលត់/ស្រុត", "ផ្ទុះ"],
+                correct: 0,
+                explanation: {
+                    desc: "잠기다 (លិច)។ -(으)ㄹ 정도로 (រហូតដល់កម្រិត)។",
+                    vocab: [{ko: "홍수", km: "ទឹកជំនន់"}]
+                }
+            },
+            {
+                q_ko: "사고 현장을 목격했다면 빨리 119에 <u>신고해야</u> 합니다.",
+                q_km: "ប្រសិនបើបានឃើញហេតុការណ៍គ្រោះថ្នាក់ផ្ទាល់ភ្នែក អ្នកត្រូវតែរាយការណ៍ទៅលេខ ១១៩។",
+                options: ["숨겨야", "알려야", "말해야", "물어야"],
+                options_km: ["លាក់បាំង", "ជូនដំណឹង", "និយាយ", "សួរ"],
+                correct: 0,
+                explanation: {
+                    desc: "ពាក្យផ្ទុយ៖ 신고하다 (រាយការណ៍) គឺផ្ទុយនឹង 숨기다 (លាក់បាំង)។",
+                    vocab: [{ko: "목격하다", km: "ឃើញនឹងភ្នែក"}, {ko: "현장", km: "កន្លែងកើតហេតុ"}]
+                }
+            },
+            {
+                q_ko: "안전 벨트를 (   ) 사고가 났을 때 크게 다칠 수 있습니다.",
+                q_km: "ប្រសិនបើ ( ) ខ្សែក្រវ៉ាត់សុវត្ថិភាព អ្នកអាចនឹងរងរបួសធ្ងន់នៅពេលមានគ្រោះថ្នាក់។",
+                options: ["매지 않으면", "매느라고", "매는 바람에", "매자마자"],
+                options_km: ["ប្រសិនបើមិនពាក់", "រវល់តែពាក់", "ដោយសារតែពាក់", "ភ្លាមៗបន្ទាប់ពីពាក់"],
+                correct: 0,
+                explanation: {
+                    desc: "안전 벨트를 매다 (ពាក់ខ្សែក្រវ៉ាត់)។",
+                    vocab: [{ko: "다치다", km: "រងរបួស"}]
+                }
+            },
+            {
+                q_ko: "등산할 때는 라이터와 같은 (   ) 물질을 가지고 가면 안 됩니다.",
+                q_km: "ពេលទៅឡើងភ្នំ អ្នកមិនត្រូវយកវត្ថុដែល ( ) ដូចជាដែកកេះទៅជាមួយឡើយ។",
+                options: ["인화성", "안전성", "휴대성", "다양성"],
+                options_km: ["ងាយឆេះ", "សុវត្ថិភាព", "ងាយយកតាមខ្លួន", "ភាពចម្រុះ"],
+                correct: 0,
+                explanation: {
+                    desc: "인화성 물질 (សារធាតុងាយឆេះ)។",
+                    vocab: [{ko: "물질", km: "សារធាតុ"}, {ko: "등산", km: "ការឡើងភ្នំ"}]
+                }
+            },
+            {
+                q_ko: "비가 많이 오는 날에는 바닥이 (   ) 넘어지지 않도록 조심하십시오.",
+                q_km: "នៅថ្ងៃដែលមានភ្លៀងធ្លាក់ខ្លាំង ព្រោះតែឥដ្ឋ ( ) សូមប្រុងប្រយ័ត្នដើម្បីកុំឱ្យដួល។",
+                options: ["미끄러우니까", "높으니까", "좁으니까", "딱딱하니까"],
+                options_km: ["ដោយសារតែរអិល", "ដោយសារតែខ្ពស់", "ដោយសារតែចង្អៀត", "ដោយសារតែរឹង"],
+                correct: 0,
+                explanation: {
+                    desc: "미끄럽다 (រអិល)។",
+                    vocab: [{ko: "넘어지다", km: "ដួល"}, {ko: "조심하다", km: "ប្រុងប្រយ័ត្ន"}]
+                }
+            }
+        ];
+
+        let state = {
+            currentIdx: 0,
+            score: 0,
+            isAnswered: false,
+            powerUps: { translateQ: false, fifty: false, translateA: false },
+            answers: []
+        };
+
+        const audioManager = {
+            isSpeaking: false,
+            speak: function(text, lang) {
+                if (this.isSpeaking) {
+                    window.speechSynthesis.cancel();
+                    this.isSpeaking = false;
+                    this.updateIcon(false);
+                    return;
+                }
+
+                // Try Google TTS first via Audio Object
+                const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${lang}&client=tw-ob`;
+                const audio = new Audio(googleUrl);
+                
+                audio.onplaying = () => { 
+                    this.isSpeaking = true; 
+                    this.updateIcon(true, lang); 
+                };
+                audio.onended = () => { 
+                    this.isSpeaking = false; 
+                    this.updateIcon(false); 
+                };
+                
+                audio.play().catch(() => {
+                    // Fallback to Web Speech API if Google TTS is blocked
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = lang === 'ko' ? 'ko-KR' : 'km-KH';
+                    
+                    // Try to find a natural voice
+                    const voices = window.speechSynthesis.getVoices();
+                    const voice = voices.find(v => v.lang.startsWith(lang));
+                    if (voice) utterance.voice = voice;
+
+                    utterance.onstart = () => { 
+                        this.isSpeaking = true; 
+                        this.updateIcon(true, lang); 
+                    };
+                    utterance.onend = () => { 
+                        this.isSpeaking = false; 
+                        this.updateIcon(false); 
+                    };
+                    window.speechSynthesis.speak(utterance);
+                });
+            },
+            speakCurrent: function(lang) {
+                const q = questions[state.currentIdx];
+                const text = lang === 'ko' ? q.q_ko : q.q_km;
+                this.speak(text, lang);
+            },
+            updateIcon: function(playing, lang) {
+                const btn = document.getElementById(lang === 'ko' ? 'btn-audio-ko' : 'btn-audio-km');
+                const otherBtn = document.getElementById(lang === 'ko' ? 'btn-audio-km' : 'btn-audio-ko');
+                
+                if (playing) {
+                    btn.classList.add('audio-playing');
+                    btn.innerHTML = lang === 'ko' ? '🇰🇷 <i class="fas fa-stop"></i>' : '🇰🇭 <i class="fas fa-stop"></i>';
+                } else {
+                    document.getElementById('btn-audio-ko').classList.remove('audio-playing');
+                    document.getElementById('btn-audio-km').classList.remove('audio-playing');
+                    document.getElementById('btn-audio-ko').innerHTML = '🇰🇷 <i class="fas fa-volume-up"></i>';
+                    document.getElementById('btn-audio-km').innerHTML = '🇰🇭 <i class="fas fa-volume-up"></i>';
+                }
+            }
+        };
+
+        const quizManager = {
+            start: function() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.renderQuestion();
+            },
+            renderQuestion: function() {
+                const q = questions[state.currentIdx];
+                state.isAnswered = false;
+                window.speechSynthesis.cancel();
+                
+                document.getElementById('question-index').innerText = `សំណួរទី ${state.currentIdx + 1}/${questions.length}`;
+                document.getElementById('progress-bar').style.width = `${((state.currentIdx + 1) / questions.length) * 100}%`;
+                
+                document.getElementById('question-text-ko').innerText = q.q_ko;
+                document.getElementById('question-text-km').innerText = q.q_km;
+                document.getElementById('question-text-km').classList.add('hidden');
+                
+                this.resetPowerUpsUI();
+
+                const container = document.getElementById('options-container');
+                container.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full p-4 text-left border-2 border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all korean-font font-medium flex justify-between items-center group";
+                    btn.innerHTML = `
+                        <span>${i + 1}. ${opt}</span>
+                        <span class="option-km hidden text-sm text-blue-600 khmer-font font-normal ml-2 italic">(${q.options_km[i]})</span>
+                    `;
+                    btn.onclick = () => this.checkAnswer(i);
+                    container.appendChild(btn);
+                });
+
+                document.getElementById('explanation-box').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+            },
+            checkAnswer: function(selected) {
+                if (state.isAnswered) return;
+                state.isAnswered = true;
+                const q = questions[state.currentIdx];
+                const isCorrect = selected === q.correct;
+                
+                if (isCorrect) {
+                    state.score++;
+                    document.getElementById('score').innerText = state.score;
+                }
+
+                state.answers.push({ qIdx: state.currentIdx, selected, isCorrect });
+
+                const buttons = document.getElementById('options-container').children;
+                buttons[q.correct].classList.add('correct');
+                if (!isCorrect) buttons[selected].classList.add('incorrect');
+
+                this.revealAll();
+            },
+            revealAll: function() {
+                document.getElementById('question-text-km').classList.remove('hidden');
+                document.querySelectorAll('.option-km').forEach(el => el.classList.remove('hidden'));
+                this.showExplanation();
+                document.getElementById('next-btn').classList.remove('hidden');
+            },
+            showExplanation: function() {
+                const q = questions[state.currentIdx];
+                const content = document.getElementById('explanation-content');
+                
+                let vocabHtml = q.explanation.vocab.map(v => 
+                    `<div class="flex items-center justify-between bg-white p-2 rounded border border-yellow-100">
+                        <span class="font-bold text-blue-800 korean-font">${v.ko}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-600 khmer-font text-xs">${v.km}</span>
+                            <button onclick="audioManager.speak('${v.ko}', 'ko')" class="text-xs text-blue-400"><i class="fas fa-volume-up"></i></button>
+                        </div>
+                    </div>`
+                ).join('');
+
+                content.innerHTML = `<p class="khmer-font leading-relaxed">${q.explanation.desc}</p><div class="grid grid-cols-2 gap-2 mt-3">${vocabHtml}</div>`;
+                document.getElementById('explanation-box').classList.remove('hidden');
+            },
+            usePowerUp: function(type) {
+                if (state.isAnswered) return;
+                const q = questions[state.currentIdx];
+                if (type === 'translateQ') {
+                    document.getElementById('question-text-km').classList.remove('hidden');
+                    document.getElementById('pu-translate-q').classList.add('power-up-active');
+                } else if (type === 'fifty') {
+                    const buttons = document.getElementById('options-container').children;
+                    let removed = 0;
+                    for (let i = 0; i < buttons.length; i++) {
+                        if (i !== q.correct && removed < 2) {
+                            buttons[i].style.opacity = '0.3';
+                            buttons[i].onclick = null;
+                            removed++;
+                        }
+                    }
+                    document.getElementById('pu-fifty').classList.add('power-up-active');
+                } else if (type === 'translateA') {
+                    document.querySelectorAll('.option-km').forEach(el => el.classList.remove('hidden'));
+                    document.getElementById('pu-translate-a').classList.add('power-up-active');
+                }
+            },
+            resetPowerUpsUI: function() {
+                ['pu-translate-q', 'pu-fifty', 'pu-translate-a'].forEach(id => document.getElementById(id).classList.remove('power-up-active'));
+            },
+            next: function() {
+                state.currentIdx++;
+                if (state.currentIdx < questions.length) this.renderQuestion();
+                else this.showResult();
+            },
+            showResult: function() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('result-score-text').innerHTML = `អ្នកឆ្លើយត្រូវ <b>${state.score}/${questions.length}</b> សំណួរ`;
+            },
+            startReview: function() {
+                state.currentIdx = 0;
+                document.getElementById('result-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.renderReviewQuestion();
+            },
+            renderReviewQuestion: function() {
+                this.renderQuestion();
+                const record = state.answers[state.currentIdx];
+                this.checkAnswer(record.selected);
+                const nextBtn = document.getElementById('next-btn');
+                if (state.currentIdx === questions.length - 1) {
+                    nextBtn.innerText = "ត្រលប់ទៅលទ្ធផល";
+                    nextBtn.onclick = () => { document.getElementById('quiz-screen').classList.add('hidden'); document.getElementById('result-screen').classList.remove('hidden'); };
+                } else {
+                    nextBtn.onclick = () => { state.currentIdx++; this.renderReviewQuestion(); };
+                }
+            }
+        };
+
+        // Initialize voices
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    </script>
+</body>
+</html>
